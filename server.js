@@ -15,7 +15,8 @@ app.use(express.json());
 
 /**
  * Helper: Safely mount a router module.
- * If the required file throws, we catch it, log the error, and keep running.
+ * If the required file throws (e.g., due to a bad route pattern),
+ * we catch it, log the error, and keep running.
  */
 function safeMount(prefix, modulePath) {
   try {
@@ -34,6 +35,9 @@ safeMount('/api/users',      './routes/userRoutes');
 safeMount('/api/tasks',      './routes/taskRoutes');
 safeMount('/api/wallet',     './routes/walletRoutes');
 safeMount('/api/admin',      './routes/adminRoutes');
+
+// ── Respond to GET /api so it doesn’t return 404 in production ─────────────────
+app.get('/api', (_req, res) => res.send('API is running'));
 
 // ── Always respond to GET / with a simple message ─────────────────────────────
 app.get('/', (_req, res) => res.send('API is running'));
