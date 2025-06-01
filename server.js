@@ -13,6 +13,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+/**
+ * Helper: Safely mount a router module.
+ * If the required file throws, we catch it, log the error, and keep running.
+ */
 function safeMount(prefix, modulePath) {
   try {
     const router = require(modulePath);
@@ -23,7 +27,7 @@ function safeMount(prefix, modulePath) {
   }
 }
 
-// Mount all of your routes (adjust these paths if your folder structure differs)
+// ── Mount each route in a try/catch so a malformed route won’t crash everything ──
 safeMount('/api/auth',       './routes/authRoutes');
 safeMount('/api/admin/auth', './routes/adminAuthRoutes');
 safeMount('/api/users',      './routes/userRoutes');
@@ -31,7 +35,7 @@ safeMount('/api/tasks',      './routes/taskRoutes');
 safeMount('/api/wallet',     './routes/walletRoutes');
 safeMount('/api/admin',      './routes/adminRoutes');
 
-// Serve React build in production; fallback on “API is running” in dev
+// ── Production: serve React build; local: "API is running" ─────────────────────
 if (process.env.NODE_ENV === 'production') {
   const buildPath = path.join(__dirname, 'frontend', 'build');
   try {
@@ -47,10 +51,11 @@ if (process.env.NODE_ENV === 'production') {
   app.get('/', (_req, res) => res.send('API is running'));
 }
 
-// Only call app.listen() locally (Vercel will invoke this as a Serverless Function)
+// ── When running locally (i.e. not on Vercel), start an HTTP server ──────────
 if (process.env.VERCEL !== '1') {
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 }
 
+// ── Export the Express app so that Vercel can spin it up as a Serverless Function ──
 module.exports = app;

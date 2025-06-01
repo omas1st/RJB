@@ -45,7 +45,7 @@ exports.sendMessageToUser = async (req, res) => {
  */
 exports.editWalletBalance = async (req, res) => {
   const { email, balance } = req.body;
-  const io = req.app.locals.io;
+  const io = req.app.locals.io; // may be undefined if not initialized
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: 'User not found' });
@@ -53,10 +53,13 @@ exports.editWalletBalance = async (req, res) => {
     user.walletBalance = balance;
     await user.save();
 
-    io.emit('walletUpdate', {
-      userId: user._id,
-      newBalance: user.walletBalance
-    });
+    // Only emit if io was set up
+    if (io && typeof io.emit === 'function') {
+      io.emit('walletUpdate', {
+        userId: user._id,
+        newBalance: user.walletBalance
+      });
+    }
 
     res.json({ message: 'Wallet updated', walletBalance: user.walletBalance });
   } catch (err) {
@@ -258,7 +261,7 @@ exports.deleteSubmission = async (req, res) => {
 };
 
 /**
- * 8. Start Task Page
+ * 8. Start Task Page (update URL)
  */
 exports.updateTaskUrl = async (req, res) => {
   const { id } = req.params;
